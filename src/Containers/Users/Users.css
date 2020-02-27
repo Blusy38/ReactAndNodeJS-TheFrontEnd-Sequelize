@@ -1,3 +1,13 @@
 .btn-sm {
     width: 30%;
 }
+.littleDiv {
+    width: 1%;
+}
+.bg-update{
+    background-color: #828282;
+}
+.form-inline {
+    margin-right: -15px;
+    margin-left: -15px;
+}

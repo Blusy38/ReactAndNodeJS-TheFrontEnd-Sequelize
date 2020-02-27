@@ -3,21 +3,24 @@ import Input from '../../components/Input/Input';
 import Select from "../../components/Select/Select";
 import Button from "../../components/Button/Button";
 import './Users.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSave, faTimes, faTrashAlt, faEdit } from '@fortawesome/free-solid-svg-icons'
 
 class Users extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            users: [],
-            newUser: {
+            allUsers: [],
+            oneUser: {
                 firstName: "",
                 lastName: "",
                 email: "",
                 phoneNumber: "",
                 weekAvailable: ""
             },
-            weekAvailableOptions: ["Oui", "Non", "Unknow"],
-            mode: 'view'
+            weekAvailableOptions: ["Yes", "No", "Unknow"],
+            mode: 'edit',
+            showClearBt:'false'
         };
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -26,61 +29,72 @@ class Users extends Component {
 
     //Called immediately after a component is mounted.
     componentDidMount() {
-        this.getUsers()
+        console.log("Call componentDidMount")
+        this.getAllUsers()
     }
 
     //Clear the form
     clearForm() {
         this.setState({
-            newUser: {
+            oneUser: {
+                id: "",
                 firstName: "",
                 lastName: "",
                 email: "",
                 phoneNumber: "",
                 weekAvailable: ""
-            }, mode: 'view'
+            }
         });
-        this.getUsers()
+        this.getAllUsers()
     }
 
-    //Populate the newUser Object when form is filled
-    handleInputChange(event) {
-        let name = event.target.name;
-        let value = event.target.value;
-        this.setState(
-            prevState => ({
-                newUser: {
-                    ...prevState.newUser,
-                    [name]: value
-                }
-            }),
-            () => console.log(this.state.newUser)
-        );
-    }
-
-    //Call the clearForm() when button Clear is clicked
-    handleClearForm(event) {
-        event.preventDefault();
-        this.clearForm()
-    }
-
-    //Get Users from Express
-    getUsers() {
+    //Get All Users in allUsers[]
+    getAllUsers() {
+        console.log("Call getAllUsers")
         fetch('/users')
-            .then(res => {
-                console.log('GET USERS response : ', res)
-                return res.json()
-            })
-            .then(users => {
-                //console.log(users);
-                this.setState({ users, mode: 'view' })
-            });
+            .then(res => res.json())
+            .then(
+                (result) => {
+                    this.setState({
+                        isLoaded: true,
+                        mode: 'edit',
+                        allUsers: result
+                    });
+                }, (error) => {
+                    this.setState({
+                        isLoaded: true,
+                        error
+                    });
+                }
+            )
     }
 
-    //ADD a user to Express when button Submit is clicked
+    //Get One User in in oneUser{}
+    getOneUser = userId => {
+        console.log("Call getOneUser, User n°:" + userId)
+        fetch('/users/' + userId)
+            .then(res => res.json())
+            .then(
+                (result) => {
+                    this.setState({
+                        isLoaded: true,
+                        mode: 'update',
+                        oneUser: result
+                    });
+                }, (error) => {
+                    this.setState({
+                        isLoaded: true,
+                        error
+                    });
+                }
+            )
+    }
+
+    //ADD a new user when Submit button is clicked
     handleSubmit(event) {
+        console.log("Call handleSubmit")
         event.preventDefault();
-        let userData = this.state.newUser;
+        let userData = this.state.oneUser;
 
         fetch("/users", {
             method: "POST",
@@ -89,311 +103,286 @@ class Users extends Component {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
-        }).then(response => {
-            response.json()
-                .then(data => {
-                    console.log('ADD USER response : ', response)
-                    this.getUsers()
+        })
+            .then(res => res.json())
+            .then(
+                (result) => {
+                    this.setState({
+                        isLoaded: true
+                    });
+                    console.log('Success:', result)
                     this.clearForm()
-
-                })
-        })
-    }
-
-    //Get Users by ID from Express
-    handleEdit = userId => {
-        fetch('/users/' + userId)
-            .then(res => {
-                console.log('GET USER by ID response : ', res)
-                return res.json()
-            })
-            .then(user => {
-                console.log("user :", user);
-                //this.setState({ user, mode: 'edit' })
-                console.log("user firstName :", user.firstName);
-                this.setState({
-                    newUser: {
-                        id: user.id,
-                        firstName: user.firstName,
-                        lastName: user.lastName,
-                        email: user.email,
-                        phoneNumber: user.phoneNumber,
-                        weekAvailable: user.weekAvailable
-                    },
-                    mode: 'edit'
-                })
-                console.log("NewUser :", this.state.newUser);;
-            });
-    }
-
-    //Update a user by ID on Express when button update is clicked
-    handleUpdate = userId => {
-
-        //This part update the user from id on Express
-        fetch("/users/" + userId, {
-            method: 'PUT',
-            body: JSON.stringify({
-                id: userId,
-                firstName: this.state.newUser.firstName,
-                lastName: this.state.newUser.lastName,
-                email: this.state.newUser.email,
-                phoneNumber: this.state.newUser.phoneNumber,
-                weekAvailable: this.state.newUser.weekAvailable
-            }),
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        }).then(response => {
-            console.log(response)
-            if (response.ok) {
-                response.json()
-                    .then(data => {
-                        console.log('UPDATE USER response : ', response)
-                        this.getUsers()
-                        this.clearForm()
-
-                    })
-            } else {
-                throw new Error('Something went wrong ...');
-            }
-        })
+                }, (error) => {
+                    this.setState({
+                        isLoaded: true,
+                        error
+                    });
+                }
+            )
     }
 
     //DELETE a user by ID on Express when button Delete is clicked
     handleDelete = userId => {
-
-        //This part delete the user from id on Express
+        console.log("Call handleDelete for user n°" + userId)
         fetch("/users/" + userId, {
             method: 'DELETE',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
-        }).then(response => {
-            response.json()
-                .then(data => {
-                    console.log('DELETE USER response : ', response)
-                    this.getUsers()
-                    this.clearForm()
-
-                })
         })
+            .then(res => res.json())
+            .then(
+                (result) => {
+                    this.setState({
+                        isLoaded: true
+                    });
+                    console.log('Success:', result)
+                    this.clearForm()
+                }, (error) => {
+                    this.setState({
+                        isLoaded: true,
+                        error
+                    });
+                }
+            )
     }
 
-    render() {
-        return (
-            <div className="container-fluid">
-                <div className="row row-cols-7 bg-secondary text-white">
-                    <div>&nbsp;&nbsp;&nbsp;#&nbsp;</div>
-                    <div className="col">First Name</div>
-                    <div className="col">Last Name</div>
-                    <div className="col">Email</div>
-                    <div className="col">Phone Number</div>
-                    <div className="col">Available</div>
-                    <div className="col">Actions</div>
-                </div>
-                {this.addUserRender()}
-                {this.updateUsersRender()}
-                {this.listUsersRender()}
-            </div>
+    //Update a user by ID on Express when button update is clicked
+    handleUpdate = userId => {
+        console.log("Call handleUpdate for user n°" + userId)
+        fetch("/users/" + userId, {
+            method: 'PUT',
+            body: JSON.stringify({
+                id: userId,
+                firstName: this.state.oneUser.firstName,
+                lastName: this.state.oneUser.lastName,
+                email: this.state.oneUser.email,
+                phoneNumber: this.state.oneUser.phoneNumber,
+                weekAvailable: this.state.oneUser.weekAvailable
+            }),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        })
+            .then(res => {
+                console.log('Responce :', res)
+                return res.json()
+            })
+            .then(
+                (result) => {
+                    this.setState({
+                        isLoaded: true
+                    });
+                    console.log('Success:', result)
+                    this.clearForm()
+                }, (error) => {
+                    this.setState({
+                        isLoaded: true,
+                        error
+                    });
+                }
+            )
+    }
+
+    //Call the getOneUser() when edit button is clicked
+    handleEdit = userId => {
+        console.log("Call handleEdit")
+        this.getOneUser(userId)
+        this.setState ({
+            showClearBt:'true'}
+        )
+    }
+
+    //Populate the oneUser Object when form is filled
+    handleInputChange(event) {
+        let name = event.target.name;
+        let value = event.target.value;
+        this.setState(
+            prevState => ({
+                oneUser: {
+                    ...prevState.oneUser,
+                    [name]: value
+                },
+                showClearBt:'true'}),
+            () => console.log(this.state.oneUser)
         );
     }
 
-    addUserRender() {
-        if (this.state.mode === 'edit') {
-            return <div></div>;
+    //Call the clearForm() when button Clear is clicked
+    handleClearForm(event) {
+        event.preventDefault();
+        this.setState ({
+            showClearBt:'false'}
+        )
+        this.clearForm()
+    }
+
+    //Main Render
+    render() {
+        const { error, isLoaded, mode } = this.state;
+        let render;
+        //If mode is Edit then show add user form at the top of the list
+        if (mode === 'edit') {
+            render = this.editUserRender()
+        }else {
+            render = <div className="row"><div className="col p-3"></div></div>
+        }
+
+        if (error) {
+            return <div>Erreur : {error.message}</div>;
+        } else if (!isLoaded) {
+            return <div>Chargement…</div>;
         } else {
             return (
-                <form className="form-inline" onSubmit={this.handleSubmit}>
-                    <div>&nbsp;&nbsp;&nbsp;</div>
-                    <div className="col">
-                        <Input
-                            inputType={"text"}
-                            title={"First Name"}
-                            name={"firstName"}
-                            value={this.state.newUser.firstName}
-                            placeholder={"Enter your firstName"}
-                            className={"form-control-plaintext"}
-                            handleChange={this.handleInputChange}
-                        />{" "}
-                        {/* FirstName of the user */}
+                <div className="container-fluid">
+                    <div className="row bg-secondary text-white">
+                        <div className="col-2">First Name</div>
+                        <div className="col-2">Last Name</div>
+                        <div className="col-2">Email</div>
+                        <div className="col-2">Phone Number</div>
+                        <div className="col-2">Available</div>
+                        <div className="col-2">Actions</div>
                     </div>
-                    <div className="col">
-                        <Input
-                            inputType={"text"}
-                            title={"Last Name"}
-                            name={"lastName"}
-                            value={this.state.newUser.lastName}
-                            placeholder={"Enter your lastName"}
-                            className={"form-control-plaintext"}
-                            handleChange={this.handleInputChange}
-                        />{" "}
-                        {/* LastName of the user */}
-                    </div>
-                    <div className="col">
-                        <Input
-                            inputType={"text"}
-                            title={"Email"}
-                            name={"email"}
-                            value={this.state.newUser.email}
-                            placeholder={"Enter your email"}
-                            className={"form-control-plaintext"}
-                            handleChange={this.handleInputChange}
-                        />{" "}
-                        {/* Email of the user */}
-                    </div>
-                    <div className="col">
-                        <Input
-                            inputType={"text"}
-                            title={"Phone Number"}
-                            name={"phoneNumber"}
-                            value={this.state.newUser.phoneNumber}
-                            placeholder={"Enter your Phone Number"}
-                            className={"form-control-plaintext"}
-                            handleChange={this.handleInputChange}
-                        />{" "}
-                        {/* Phone Number of the user */}
-                    </div>
-                    <div className="col">
-                        <Select
-                            title={"Week Available"}
-                            name={"weekAvailable"}
-                            options={this.state.weekAvailableOptions}
-                            value={this.state.newUser.weekAvailable}
-                            placeholder={"Are you available ?"}
-                            className={"custom-select"}
-                            handleChange={this.handleInputChange}
-                        />{" "}
-                        {/* Available Selection */}
-                    </div>
-                    <div className="col">
-                        <Button
-                            action={this.handleSubmit}
-                            type={"btn btn-success btn-sm"}
-                            title={"Submit"}
-                        />{" "}
-                        {/*Submit */}
-                        <Button
-                            action={this.handleClearForm}
-                            type={"btn btn-secondary btn-sm"}
-                            title={"Clear"}
-                        />{" "}
-                        {/* Clear the form */}
-                    </div>
-                </form>
-
+                    {render}
+                    {this.listUsersRender()}
+                </div>
             );
         }
+
     }
 
-    updateUsersRender() {
-        if (this.state.mode === 'view') {
-            return <div></div>;
-        } else {
+    //Render for the users list
+    listUsersRender() {
+        const { oneUser,allUsers } = this.state;
+        return allUsers.map(user => {
+            const { id, firstName, lastName, email, phoneNumber, weekAvailable } = user
+            //If we edit the user then show edit User Form
+            if (oneUser.id === id) {
+                return (
+                    <div className="bg-update" key={id} >{this.editUserRender()}</div>
+                )
+            };
             return (
-                <div>
-                    <form className="form-inline" onSubmit={e => this.handleUpdate(this.state.newUser.id)}>
-                        <div>{this.state.newUser.id}</div>
-                        <div className="col">
-                            <Input
-                                inputType={"text"}
-                                title={"First Name"}
-                                name={"firstName"}
-                                value={this.state.newUser.firstName}
-                                handleChange={this.handleInputChange}
-                            />{" "}
-                            {/* FirstName of the user */}
-                        </div>
-                        <div className="col"><Input
-                            inputType={"text"}
-                            title={"Last Name"}
-                            name={"lastName"}
-                            value={this.state.newUser.lastName}
-                            handleChange={this.handleInputChange}
+                <div key={id} className="row">
+                    <div className="col-2">{firstName}</div>
+                    <div className="col-2">{lastName}</div>
+                    <div className="col-2">{email}</div>
+                    <div className="col-2">{phoneNumber}</div>
+                    <div className="col-2">{weekAvailable}</div>
+                    <div className="col-2">
+                        <Button
+                            action={e => this.handleEdit(user.id)}
+                            type={"btn"}
+                            title={<FontAwesomeIcon icon={faEdit} />}
                         />{" "}
-                            {/* LastName of the user */}
-                        </div>
-                        <div className="col">
-                            <Input
-                                inputType={"text"}
-                                title={"Email"}
-                                name={"email"}
-                                value={this.state.newUser.email}
-                                handleChange={this.handleInputChange}
-                            />{" "}
-                            {/* Email of the user */}
-                        </div>
-                        <div className="col">
-                            <Input
-                                inputType={"text"}
-                                title={"Phone Number"}
-                                name={"phoneNumber"}
-                                value={this.state.newUser.phoneNumber}
-                                handleChange={this.handleInputChange}
-                            />{" "}
-                            {/* Phone Number of the user */}
-                        </div>
-                        <div className="col"><Select
-                            title={"Week Available"}
-                            name={"weekAvailable"}
-                            options={this.state.weekAvailableOptions}
-                            value={this.state.newUser.weekAvailable}
-                            placeholder={"Are you available ?"}
-                            className={"custom-select"}
-                            handleChange={this.handleInputChange}
+                        {/*Edit */}
+                        <Button
+                            action={(e) => { if (window.confirm('Are you sure you wish to delete this item?')) this.handleDelete(user.id) } }
+                            type={"btn"}
+                            title={<FontAwesomeIcon icon={faTrashAlt} />}
                         />{" "}
-                            {/* Available Selection */}</div>
-                        <div className="col">
-                            <Button
-                                action={e => this.handleEdit(this.state.newUser.id)}
-                                type={"btn btn-primary btn-sm"}
-                                title={"Update"}
-                            />{" "}
-                            {/*Update */}
-                            <Button
-                                action={this.handleClearForm}
-                                type={"btn btn-secondary btn-sm"}
-                                title={"Clear"}
-                            />{" "}
-                            {/* Clear the form */}
-                        </div>
-                    </form>
+                        {/*Delete */}
+                    </div>
                 </div>
             )
-        }
+        })
+
     }
-    listUsersRender() {
-        if (this.state.mode === 'edit') {
-            return <div></div>;
+
+    editUserRender() {
+        let submitButton;
+        let clearButton;
+        const { oneUser, mode, showClearBt } = this.state;
+        const { id, firstName, lastName, email, phoneNumber, weekAvailable } = oneUser
+        
+        //Show the submit or Update button depends on the mode
+        if (mode === 'edit') {
+            submitButton = <Button
+                action={this.handleSubmit}
+                type={"btn"}
+                title={<FontAwesomeIcon icon={faSave} />}
+            />
         } else {
-            return this.state.users.map(user => {
-                const { id, firstName, lastName, email, phoneNumber, weekAvailable } = user
-                return (
-                    <div key={id} className="row">
-                        <div>{id}</div>
-                        <div className="col">{firstName}</div>
-                        <div className="col">{lastName}</div>
-                        <div className="col">{email}</div>
-                        <div className="col">{phoneNumber}</div>
-                        <div className="col">{weekAvailable}</div>
-                        <div className="col">
-                            <Button
-                                action={e => this.handleEdit(user.id)}
-                                type={"btn btn-primary btn-sm"}
-                                title={"Edit"}
-                            />{" "}
-                            {/*Delete */}
-                            <Button
-                                action={e => this.handleDelete(user.id)}
-                                type={"btn btn-danger btn-sm"}
-                                title={"Delete"}
-                            />{" "}
-                            {/*Delete */}
-                        </div>
-                    </div>
-                )
-            })
+            submitButton = <Button
+                action={e => this.handleUpdate(id)}
+                type={"btn"}
+                title={<FontAwesomeIcon icon={faSave} />}
+            />
         }
+        
+        //Show the Clear button when we start to fill the form
+        if (showClearBt === 'true') {
+            clearButton = <Button
+            action={this.handleClearForm}
+            type={"btn"}
+            title={<FontAwesomeIcon icon={faTimes} />}
+        />
+        }
+        return (
+            <form className="form-inline">
+                <div className="col-2">
+                    <Input
+                        inputType={"text"}
+                        title={"First Name"}
+                        name={"firstName"}
+                        value={firstName}
+                        placeholder={"Enter your firstName"}
+                        className={"form-control-plaintext"}
+                        handleChange={this.handleInputChange}
+                    />
+                </div>
+                <div className="col-2">
+                    <Input
+                        inputType={"text"}
+                        title={"Last Name"}
+                        name={"lastName"}
+                        value={lastName}
+                        placeholder={"Enter your lastName"}
+                        className={"form-control-plaintext"}
+                        handleChange={this.handleInputChange}
+                    />
+                </div>
+                <div className="col-2">
+                    <Input
+                        inputType={"text"}
+                        title={"Email"}
+                        name={"email"}
+                        value={email}
+                        placeholder={"Enter your email"}
+                        className={"form-control-plaintext"}
+                        handleChange={this.handleInputChange}
+                    />
+                </div>
+                <div className="col-2">
+                    <Input
+                        inputType={"text"}
+                        title={"Phone Number"}
+                        name={"phoneNumber"}
+                        value={phoneNumber}
+                        placeholder={"Enter your Phone Number"}
+                        className={"form-control-plaintext"}
+                        handleChange={this.handleInputChange}
+                    />
+                </div>
+                <div className="col-2">
+                    <Select
+                        title={"Week Available"}
+                        name={"weekAvailable"}
+                        options={this.state.weekAvailableOptions}
+                        value={weekAvailable}
+                        placeholder={"Are you available ?"}
+                        className={"custom-select"}
+                        handleChange={this.handleInputChange}
+                    />
+                </div>
+                <div className="col-2">
+                    {submitButton}
+                    {" "}
+                    {clearButton}
+                </div>
+            </form>
+        );
     }
 }
 export default Users;
