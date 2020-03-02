@@ -16,9 +16,9 @@ class Users extends Component {
                 lastName: "",
                 email: "",
                 phoneNumber: "",
-                weekAvailable: ""
+                available: ""
             },
-            weekAvailableOptions: ["Yes", "No", "Unknow"],
+            availableOptions: ["Yes", "No", "Unknow"],
             mode: 'edit',
             showClearBt:'false'
         };
@@ -42,7 +42,7 @@ class Users extends Component {
                 lastName: "",
                 email: "",
                 phoneNumber: "",
-                weekAvailable: ""
+                available: ""
             }
         });
         this.getAllUsers()
@@ -159,7 +159,7 @@ class Users extends Component {
                 lastName: this.state.oneUser.lastName,
                 email: this.state.oneUser.email,
                 phoneNumber: this.state.oneUser.phoneNumber,
-                weekAvailable: this.state.oneUser.weekAvailable
+                available: this.state.oneUser.available
             }),
             headers: {
                 'Content-Type': 'application/json'
@@ -228,7 +228,6 @@ class Users extends Component {
         }else {
             render = <div className="row"><div className="col p-3"></div></div>
         }
-
         if (error) {
             return <div>Erreur : {error.message}</div>;
         } else if (!isLoaded) {
@@ -256,7 +255,7 @@ class Users extends Component {
     listUsersRender() {
         const { oneUser,allUsers } = this.state;
         return allUsers.map(user => {
-            const { id, firstName, lastName, email, phoneNumber, weekAvailable } = user
+            const { id, firstName, lastName, email, phoneNumber, available } = user
             //If we edit the user then show edit User Form
             if (oneUser.id === id) {
                 return (
@@ -269,7 +268,7 @@ class Users extends Component {
                     <div className="col-2">{lastName}</div>
                     <div className="col-2">{email}</div>
                     <div className="col-2">{phoneNumber}</div>
-                    <div className="col-2">{weekAvailable}</div>
+                    <div className="col-2">{available}</div>
                     <div className="col-2">
                         <Button
                             action={e => this.handleEdit(user.id)}
@@ -294,7 +293,7 @@ class Users extends Component {
         let submitButton;
         let clearButton;
         const { oneUser, mode, showClearBt } = this.state;
-        const { id, firstName, lastName, email, phoneNumber, weekAvailable } = oneUser
+        const { id, firstName, lastName, email, phoneNumber, available } = oneUser
         
         //Show the submit or Update button depends on the mode
         if (mode === 'edit') {
@@ -367,10 +366,10 @@ class Users extends Component {
                 </div>
                 <div className="col-2">
                     <Select
-                        title={"Week Available"}
-                        name={"weekAvailable"}
-                        options={this.state.weekAvailableOptions}
-                        value={weekAvailable}
+                        title={"Available"}
+                        name={"available"}
+                        options={this.state.availableOptions}
+                        value={available}
                         placeholder={"Are you available ?"}
                         className={"custom-select"}
                         handleChange={this.handleInputChange}
