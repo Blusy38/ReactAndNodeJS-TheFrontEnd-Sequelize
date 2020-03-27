@@ -8,6 +8,8 @@ const Button = props => {
       className={props.type}
       onClick={props.action}
       type="submit"
+      name={props.name}
+      disabled={props.isDisabled ? "disabled" : false} 
     >
       {props.title}
     </button>

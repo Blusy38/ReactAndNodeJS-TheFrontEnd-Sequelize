@@ -1,0 +1,7 @@
+.ProductTableHeader-current {
+    background-color: #0ff;
+  }
+th {
+    min-width: 180px;
+    text-transform: capitalize;
+}

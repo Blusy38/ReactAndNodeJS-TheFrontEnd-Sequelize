@@ -1,0 +1,11 @@
+th {
+    min-width: 180px;
+    text-transform: capitalize;
+}
+
+.SortableColumnHeader-current{
+    display: none;
+}
+.SortableColumnHeader-notcurrent{
+    visibility: visible;
+}

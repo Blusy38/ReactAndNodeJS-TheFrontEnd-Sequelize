@@ -220,6 +220,8 @@ class Users extends Component {
 
     //Main Render
     render() {
+        console.log('users props : ',this.props)
+        console.log('users state : ',this.state)
         const { error, isLoaded, mode } = this.state;
         let render;
         //If mode is Edit then show add user form at the top of the list
