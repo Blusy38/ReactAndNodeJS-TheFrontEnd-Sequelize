@@ -8,7 +8,7 @@ class MyNavBar extends Component {
             <Navbar.Brand href="/home/">Home</Navbar.Brand>
             <Nav className="mr-auto">
               <Nav.Link href="/users">Users</Nav.Link>
-              <Nav.Link href="/products">Products</Nav.Link>
+              <Nav.Link href="/products">Users2</Nav.Link>
             </Nav>
           </Navbar>
          );
